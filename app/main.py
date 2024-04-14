@@ -7,10 +7,13 @@ def main():
     print("Logs from your program will appear here!")
 
     # Uncomment this to pass the first stage
-    #
+    
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-    server_socket.accept() # wait for client
-
+    
+    while True:
+        sock, addr = server_socket.accept() # wait for client
+        print(sock, addr)
+        sock.send("HTTP/1.1 200 OK \r\n\r\n".encode())
 
 if __name__ == "__main__":
     main()
