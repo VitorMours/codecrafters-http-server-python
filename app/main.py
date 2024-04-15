@@ -91,7 +91,6 @@ class WebServer:
              
             self.request_data = socket.recvmsg(1024)
             self.request_data = self._clean_request(self.request_data, return_dict=True)
-            self.show_request(self.request_data)
             socket.send(self.http_code(self.request_data["Request"]).encode())
 
 
