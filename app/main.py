@@ -26,12 +26,12 @@ class WebServer:
 
         match http_path:
             case s if http_path.startswith("/echo/"):
-                http_path.lstrip("/echo/")
+                http_path = http_path.lstrip("/echo/")
                 _str = "HTTP/1.1 200\r\n"
                 _str += "Content-Type: text/plain\r\n" 
                 _str += f"Content-Length:{len(http_path)} \r\n\r\n"
-                _str += f"{http_path}\r\n\r\n"
 
+                _str += f"{http_path}\r\n\r\n"
 
             case "/":
                 _str = "HTTP/1.1 200 OK\r\n\r\n"
