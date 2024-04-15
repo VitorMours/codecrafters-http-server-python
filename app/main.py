@@ -84,7 +84,6 @@ class WebServer:
              
             data = socket.recvmsg(1024)
             data = self._clean_request(data, return_dict=True)
-            print(data)
 
             socket.send(self.http_code(data["Request"]).encode())
 
