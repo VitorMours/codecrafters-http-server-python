@@ -4,23 +4,22 @@ import socket
 import os
 
 class WebServer:
-    def __init__(self, host: int | str="localhost", port:int=4221) -> None:
+    def __init__(self, host: int | str="localhost", port: int=4221) -> None:
         self.host = host 
         self.port = port 
-        self.server = None
         self.paths = ['']
         self.request_data = None
 
     def get_user_agent(self):
         return self.request_data['User-Agent']
 
-    def create_server(self, not_run:bool) -> socket.socket:
-        self.server = socket.create_server((self.host, self.port), reuse_port=True)
+    def create_server(self, run:bool = False) -> socket.socket:
+        server = socket.create_server((self.host, self.port), reuse_port=True)
 
-        if not_run:
-            return self.server 
+        if run:
+            return self.run(server) 
         else:
-            self.run(self.server)
+            return server
         
 
     def http_code(self, http_path: str) -> str:
@@ -80,32 +79,33 @@ class WebServer:
 
         return _str
 
-    def connection_handler(self, socket) -> None:
+    def connection_handler(self, socket: socket.socket, log: bool = False) -> None:
         self.request_data = socket.recvmsg(1024)
         self.request_data = self._clean_request(self.request_data, return_dict=True)
+        
+        if log:
+            self.show_request(self.request_data)
+
         socket.send(self.http_code(self.request_data["Request"]).encode())
 
 
     def run(self, server: socket.socket=None) -> None:
         
-        threads = []
-        
-        while True:
-            if self.server is None:
+        if server is not None:
+            while True:
                 print("Logs from your program will appear here")
             
-                with self.create_server() as self.server:
-                    socket, address = self.server.accept()
-                    self.connection_handler(socket)   
-            #        thread = Thread(target = connection_handler, args=[socket])
-            #        threads.append(thread)
-            #        thread.start()
+                socket, address = server.accept()
 
-            #        for thread in threads:
-            #            thread.join()
-            #            print(f"{thread} closed.")
+                thread = Thread(target = connection_handler, args=[socket])
+                threads.append(thread)
+                thread.start()
+
+                for thread in threads:
+                    thread.join()
+                    print(f"{thread} closed.")
 
 
 if __name__ == "__main__":
     webserver = WebServer()
-    webserver.create_server(not_run=False)
+    webserver.create_server(run=True)
