@@ -97,7 +97,7 @@ class WebServer:
             
                 socket, address = server.accept()
 
-                thread = Thread(target = connection_handler, args=[socket])
+                thread = Thread(target = self.connection_handler, args=[socket])
                 threads.append(thread)
                 thread.start()
 
