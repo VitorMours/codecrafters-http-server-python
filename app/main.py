@@ -104,7 +104,7 @@ class WebServer:
 
                 finally:
                     for thread in threads:
-                        thread.join()
+                        thread.join(timeout=15)
                         print(f"{thread} closed.")
 
 
