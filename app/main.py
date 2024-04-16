@@ -92,8 +92,8 @@ class WebServer:
     def run(self, server: socket.socket=None) -> None:
         threads = [] 
         if server is not None:
-            while True:
-                try:
+            try:
+                while True:
                     print("Logs from your program will appear here")
             
                     socket, address = server.accept()
@@ -102,10 +102,10 @@ class WebServer:
                     threads.append(thread)
                     thread.start()
 
-                finally:
-                    for thread in threads:
-                        thread.join(timeout=15)
-                        print(f"{thread} closed.")
+            finally:
+                for thread in threads:
+                    thread.join(timeout=15)
+                    print(f"{thread} closed.")
 
 
 if __name__ == "__main__":
