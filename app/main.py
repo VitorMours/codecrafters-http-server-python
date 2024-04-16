@@ -93,17 +93,19 @@ class WebServer:
         threads = [] 
         if server is not None:
             while True:
-                print("Logs from your program will appear here")
+                try:
+                    print("Logs from your program will appear here")
             
-                socket, address = server.accept()
+                    socket, address = server.accept()
 
-                thread = Thread(target = self.connection_handler, args=[socket])
-                threads.append(thread)
-                thread.start()
+                    thread = Thread(target = self.connection_handler, args=[socket])
+                    threads.append(thread)
+                    thread.start()
 
-                for thread in threads:
-                    thread.join()
-                    print(f"{thread} closed.")
+                finally:
+                    for thread in threads:
+                        thread.join()
+                        print(f"{thread} closed.")
 
 
 if __name__ == "__main__":
