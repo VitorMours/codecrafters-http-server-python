@@ -95,17 +95,15 @@ class WebServer:
                 print("Logs from your program will appear here")
             
                 with self.create_server() as self.server:
-                    try:
-                        socket, address = self.server.accept()
+                    socket, address = self.server.accept()
                 
-                        thread = Thread(target = connection_handler, args=[socket])
-                        threads.append(thread)
-                        thread.start()
+            #        thread = Thread(target = connection_handler, args=[socket])
+            #        threads.append(thread)
+            #        thread.start()
 
-                    finally:
-                        for thread in threads:
-                            thread.join()
-                            print(f"{thread} closed.")
+            #        for thread in threads:
+            #            thread.join()
+            #            print(f"{thread} closed.")
 
 
 if __name__ == "__main__":
