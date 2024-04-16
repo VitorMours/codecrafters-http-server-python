@@ -1,5 +1,5 @@
 # Uncomment this to pass the first stage
-import threading
+from threading import Thread
 import socket
 import os
 
