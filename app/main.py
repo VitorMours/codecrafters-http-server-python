@@ -90,7 +90,7 @@ class WebServer:
 
 
     def run(self, server: socket.socket=None) -> None:
-        
+        threads = [] 
         if server is not None:
             while True:
                 print("Logs from your program will appear here")
