@@ -1,6 +1,6 @@
 # Uncomment this to pass the first stage
+import threading
 import socket
-import re
 import os
 
 class WebServer:
@@ -80,18 +80,31 @@ class WebServer:
 
         return _str
 
+    def connection_handler(self, socket) -> None:
+        self.request_data = socket.recvmsg(1024)
+        self.request_data = self._clean_request(self.request_data, return_dict=True)
+        socket.send(self.http_code(self.request_data["Request"]).encode())
+
+
     def run(self, server: socket.socket=None) -> None:
         
-        if self.server is None:
-            server = self.create_server()
+        threads = []
         
-        print("Logs from your program will appear here")
-        while True:
-            socket, address = self.server.accept()
-             
-            self.request_data = socket.recvmsg(1024)
-            self.request_data = self._clean_request(self.request_data, return_dict=True)
-            socket.send(self.http_code(self.request_data["Request"]).encode())
+        if self.server is None:
+            print("Logs from your program will appear here")
+            
+            with self.create_server() as self.server:
+                try:
+                    socket, address = self.server.accept()
+                
+                    thread = Thread(target = connection_handler, args=[socket])
+                    threads.append(thread)
+                    thread.start()
+
+                finally:
+                    for thread in threads:
+                        thread.join()
+                        print(f"{thread} closed.")
 
 
 if __name__ == "__main__":
