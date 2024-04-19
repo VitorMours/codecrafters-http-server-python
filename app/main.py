@@ -2,14 +2,81 @@
 from threading import Thread
 import socket
 import os
+import mypy
 
-class WebServer:
-    def __init__(self, host: int | str="localhost", port: int=4221) -> None:
+
+
+
+class Request:
+    def __init__(self, http_method: str, path: str, http_version: str) -> None:
+        self._http_method = http_method 
+        self._path = path 
+        self._http_version = http_version 
+
+
+    @property
+    def http_method(self):
+        """The http_method property."""
+        return self._http_method
+    
+    @http_method.setter
+    def http_method(self, value):
+        self._http_method = value
+
+
+    @property
+    def path(self):
+        """The path property."""
+        return self._path
+    
+    @path.setter
+    def path(self, value):
+        self._path = value
+        
+
+    @property
+    def http_version(self):
+        """The http_version property."""
+        return self._http_version
+
+
+    @http_version.setter
+    def http_version(self, value):
+        self._http_version = value
+
+
+ 
+
+    def __str__(self) -> None:
+        str = f'Http Method: {self._http_method}\n'
+        str += f'Request path: {self._path}\n'
+        str += f'Http Version: {self._http_version}'
+
+        return str
+
+
+    def has_directory(self, directory: str, first_directory: bool = False) -> bool:
+        
+        if first_directory:
+            if self.path.startswith(directory):
+                return True
+
+        if directory in self.path:
+            return True
+
+        return False
+        
+
+
+class HttpWebServer:
+    def __init__(self, host: int | str="localhost", port: int=4221, log: bool = False) -> None:
         self.host = host 
         self.port = port 
-        self.paths = ['']
+        self.files = {}
         self.request_data = None
-
+        self.log = log
+    
+    
     def get_user_agent(self):
         return self.request_data['User-Agent']
 
@@ -17,24 +84,33 @@ class WebServer:
         server = socket.create_server((self.host, self.port), reuse_port=True)
 
         if run:
-            return self.run(server) 
+            self.run(server) 
         else:
             return server
         
 
     def http_code(self, http_path: str) -> str:
-        http_path = (http_path.lstrip("GET").rstrip("HTTP/1.1")).strip()
+       
+        request = Request(*http_path.split())
         _str = ''
 
-        match http_path:
-            case s if http_path.startswith("/echo/"):
-                http_path = http_path.lstrip("/echo/")
-                _str = self.create_response(http_path)
-            
-            case s if http_path.startswith("/user-agent"):
-                _str = self.create_response(self.get_user_agent())
-                
+        
+        
+        match request.path:
 
+            case s if request.has_directory("/echo/", first_directory=True):
+                _path = request.path.lstrip("/echo/")
+                _str = self.create_response(_path)
+            
+            case s if request.has_directory("/files/"):
+                
+                _path = request.path.lstrip("/files/")
+    
+                _str =  self.create_response(_path)
+            
+
+            case "/user-agent":
+                self.create_response(self.get_user_agent())
 
             case "/":
                 _str = "HTTP/1.1 200 OK\r\n\r\n"
@@ -44,7 +120,7 @@ class WebServer:
 
         return _str
 
-    def show_request(self, data: str) -> None:
+    def show_request(self, data: str | dict[str, str]) -> None:
         size = os.get_terminal_size()[0]
         print(f"\n{' Request Data ':=^{size}}")
         print(data)
@@ -98,7 +174,7 @@ class WebServer:
             
                     socket, address = server.accept()
 
-                    thread = Thread(target = self.connection_handler, args=[socket])
+                    thread = Thread(target = self.connection_handler, args=[socket, self.log])
                     threads.append(thread)
                     thread.start()
 
@@ -109,5 +185,5 @@ class WebServer:
 
 
 if __name__ == "__main__":
-    webserver = WebServer()
+    webserver = HttpWebServer(log=True)
     webserver.create_server(run=True)
