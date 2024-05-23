@@ -102,43 +102,57 @@ class HttpWebServer:
         request = Request(*http_path.split())
         _str = ''
 
-        
-        
-        match request.path:
-
-            case s if request.has_directory("/echo/", first_directory=True):
-                _path = request.path.lstrip("/echo/")
-                _str = self.create_response("text/plain", _path)
-            
-            case s if request.has_directory("/files/"):
-                
-                _path = request.path.lstrip("/files/")
+        if "POST" in request.http_method:
+            _path = request.path.lstrip("/files/")
     
-                directory = sys.argv[2] 
-                file_path = request.path[7:]
+            directory = sys.argv[2] 
+            file_path = request.path[7:]
                 
-                try:
-                    with open(f"{directory}{file_path}") as file:
-                        _path = file.read()
- 
-                        _str =  self.create_response("application/octet-stream", _path) 
-                except FileNotFoundError:
-                    _str = "HTTP/1.1 404 Not Found\r\n\r\n"
+            try:
+                with open(f"{directory}{file_path}", "w") as file:
+                    file.write(self.request_data['Post-Content'])
+                    _path = " "
+                    _str =  self.create_response("201 Created", "application/octet-stream", _path) 
+            except FileNotFoundError:
+                _str = "HTTP/1.1 404 Not Found\r\n\r\n"
 
-
-            case "/user-agent":
-
-                print(f"\n\n{request}")
-
-                _type = "text/plain"
-                _str = self.create_response(_type, self.request_data["User-Agent"])
-
-
-            case "/":
-                _str = "HTTP/1.1 200 OK\r\n\r\n"
         
-            case _: 
-                _str = "HTTP/1.1 404 Not Found\r\n\r\n"                 
+        else:
+            match request.path:
+
+                case s if request.has_directory("/echo/", first_directory=True):
+                    _path = request.path.lstrip("/echo/")
+                    _str = self.create_response("200 OK", "text/plain", _path)
+            
+                case s if request.has_directory("/files/"):
+                
+                    _path = request.path.lstrip("/files/")
+    
+                    directory = sys.argv[2] 
+                    file_path = request.path[7:]
+                
+                    try:
+                        with open(f"{directory}{file_path}") as file:
+                            _path = file.read()
+ 
+                            _str =  self.create_response("200 OK", "application/octet-stream", _path) 
+                    except FileNotFoundError:
+                        _str = "HTTP/1.1 404 Not Found\r\n\r\n"
+
+
+                case "/user-agent":
+
+                    print(f"\n\n{request}")
+
+                    _type = "text/plain"
+                    _str = self.create_response("200 OK", _type, self.request_data["User-Agent"])
+
+    
+                case "/":
+                    _str = "HTTP/1.1 200 OK\r\n\r\n"
+        
+                case _: 
+                    _str = "HTTP/1.1 404 Not Found\r\n\r\n"                 
 
         return _str
 
@@ -175,6 +189,8 @@ class HttpWebServer:
                 key, value = info.split(": ", 1)
                 _dict[key] = value 
         
+        _dict["Post-Content"] = http_request[-1]
+
         if return_dict:
             return _dict
 
@@ -184,8 +200,8 @@ class HttpWebServer:
         return _str
 
 
-    def create_response(self, type:str, data:str) -> str:
-        _str = 'HTTP/1.1 200 OK\r\n'
+    def create_response(self, code:int, type:str, data:str) -> str:
+        _str = f'HTTP/1.1 {code}\r\n'
         _str += f"Content-Type: {type}\r\n"
         _str += f"Content-Length:{len(data)}\r\n\r\n"
         _str += f"{data}\r\n\r\n"
@@ -194,6 +210,7 @@ class HttpWebServer:
 
     def connection_handler(self, socket: socket.socket, log: bool = False) -> None:
         self.request_data = socket.recvmsg(1024)
+        print(self.request_data)
         self.request_data = self._clean_request(self.request_data, return_dict=True)
 
         if log:
@@ -234,3 +251,4 @@ class HttpWebServer:
 if __name__ == "__main__":
     webserver = HttpWebServer()
     webserver.create_server(run=True)
+    
