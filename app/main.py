@@ -13,7 +13,7 @@ class Request:
 
     @property
     def http_method(self):
-"""The http_method property."""
+        """The http_method property."""
         return self._http_method
     
     @http_method.setter
