@@ -2,6 +2,7 @@
 #from http_server import HttpWebServer
 from threading import Thread
 import socket
+import sys
 import os
 
 class Request:
@@ -73,16 +74,6 @@ class HttpWebServer:
         self.log = log
     
     
-    def get_user_agent(self):
-        """
-        Getter to the user agent used to access the server. 
-
-        Returns
-        -------
-            self.request_data['User-Agent']: str
-        """
-        return self.request_data['User-Agent']
-
     def create_server(self, run:bool = False) -> socket.socket:
         """ 
         Responsible function to create the server and run the same. 
@@ -123,17 +114,24 @@ class HttpWebServer:
                 
                 _path = request.path.lstrip("/files/")
     
-                print(sys.argv)                
-
-
-                _str =  self.create_response(_path) 
-            
-
-
+                directory = sys.argv[2] 
+                file_path = request.path[7:]
+                
+                try:
+                    with open(f"{directory}{file_path}") as file:
+                        _path = file.read()
+ 
+                        _str =  self.create_response("application/octet-stream", _path) 
+                except FileNotFoundError:
+                    _str = "HTTP/1.1 404 Not Found\r\n\r\n"
 
 
             case "/user-agent":
-                self.create_response("text/plain", self.get_user_agent())
+
+                print(f"\n\n{request}")
+
+                _type = "text/plain"
+                _str = self.create_response(_type, self.request_data["User-Agent"])
 
 
             case "/":
@@ -187,7 +185,7 @@ class HttpWebServer:
 
 
     def create_response(self, type:str, data:str) -> str:
-        _str = 'HTTP/1.1 200\r\n'
+        _str = 'HTTP/1.1 200 OK\r\n'
         _str += f"Content-Type: {type}\r\n"
         _str += f"Content-Length:{len(data)}\r\n\r\n"
         _str += f"{data}\r\n\r\n"
@@ -197,7 +195,7 @@ class HttpWebServer:
     def connection_handler(self, socket: socket.socket, log: bool = False) -> None:
         self.request_data = socket.recvmsg(1024)
         self.request_data = self._clean_request(self.request_data, return_dict=True)
-        
+
         if log:
             self.show_request(self.request_data)
 
@@ -219,7 +217,6 @@ class HttpWebServer:
                     print("Logs from your program will appear here")
             
                     socket, address = server.accept()
-
                     thread = Thread(target = self.connection_handler, args=[socket, self.log])
                     threads.append(thread)
                     thread.start()
@@ -235,5 +232,5 @@ class HttpWebServer:
 
 
 if __name__ == "__main__":
-    webserver = HttpWebServer(log=True)
+    webserver = HttpWebServer()
     webserver.create_server(run=True)
